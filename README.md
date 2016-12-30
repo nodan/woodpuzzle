@@ -1,6 +1,6 @@
 # woodpuzzle
 
-This program solves a simple puzzle with wooden pieces. The puzzle is a 4x5 plane with pieces of size 1x1, 1x2, 2x2 and 2x2 on it. Pieces can be moved to empty adjacent spaces. The puzzle is solved when the 2x2 piece has been moved from the center top to the center bottom.
+This program solves a simple puzzle with wooden pieces. The puzzle is a 4x5 plane with pieces of size 1x1, 1x2, 2x1 and 2x2 on it. Pieces can be moved to empty adjacent spaces. The puzzle is solved when the 2x2 piece has been moved from the center top to the center bottom.
 
 ```
    Start            End
