@@ -104,16 +104,14 @@ private:
     static uint32 sum;
     static uint64 moves;
 
-    // mark searching the given position and depth a failure
-    void fail(uint8 depth, uint32 hashvalue) {
+    // check if the given position has been searched before
+    int fails(uint8 depth, uint32 hashvalue) {
         if (hashtable[hashvalue]<depth) {
             hashtable[hashvalue] = depth;
+            return 0;
         }
-    }
 
-    // check if searching the given position and depth was a failure
-    int fails(uint8 depth, uint32 hashvalue) {
-        return hashtable[hashvalue]<depth ? 0 : 1;
+        return 1;
     }
 
     // solve the puzzle by searching to the given depth
@@ -128,21 +126,16 @@ private:
                             if (board[i]->move(*this, dx, dy, hashvalue)) {
                                 if (mode==depth_first) {
                                     // recursively search depth first
-                                    int s = 1;
                                     tries++;
-                                    if (board[i]->solved(*this) || (!fails(depth, hashvalue) && (s = solve(depth-1)))) {
+                                    if (board[i]->solved(*this) || (!fails(depth, hashvalue) && solve(depth-1))) {
                                         if (depth==1) {
                                             std::cout << moves << " moves" << std::endl;
                                         }
 
-                                        print();
+                                        print_nice();
                                         board[i]->move(*this, -dx, -dy);
 
                                         return 1;
-                                    }
-
-                                    if (depth-1 && !s) {
-                                        fail(depth-1, hashvalue);
                                     }
                                 } else {
                                     // scan hashtable and keep track how a position has been reached
@@ -468,7 +461,7 @@ public:
             recursions = tries = 0;
 
             if (solve(depth)) {
-                print();
+                print_nice();
                 break;
             }
         }
@@ -527,6 +520,7 @@ int piece::solved(class puzzle& board) {
         }
     }
 
+    std::cout << std::endl;
     for (int i=0; i<board(); i++) {
         std::cout << i << ":" << board[i]->x << " " << board[i]->y << " " << board[i]->tx << " " << board[i]->ty << " " << board[i]->match << std::endl;
     }
