@@ -30,7 +30,8 @@
 #define LEGAL    0x01
 #define REACHED  0x02
 #define EXPANDED 0x04
-#define FINAL    0x81
+#define FOUND    0x40
+#define FINAL    0x80
 
 // some type definitions
 typedef unsigned char      uint8;
@@ -197,7 +198,7 @@ public:
     }
 
     // try to solve the puzzle by scanning the hashtable for all legal positions
-    void scan_hashtable() {
+    void scan_hashtable(int all=0) {
         int legal = 0;
         int final = 0;
         int total = 0;
@@ -219,27 +220,33 @@ public:
         mode = scan;
         hashtable[start] |= REACHED;
 
+        int solved = 0;
         while (1) {
-            int solved = 0;
             int expand = 0;
             for (int i=0; i<S; i++) {
                 if (hashtable[i] & LEGAL) {
-                    if ((hashtable[i] & (REACHED|FINAL))==(REACHED|FINAL)) {
+                    if ((hashtable[i] & (REACHED|FINAL|FOUND))==(REACHED|FINAL)) {
+                        hashtable[i] |= FOUND;
                         solved++;
-                        std::cout << "solution found" << std::endl;
-                        int n = 0;
-                        while (i) {
-                            std::cout << ++n << " " << std::hex << "# 0x" << i << std::dec << std::endl;
+
+                        if (!all) {
+                            int n = 0;
+                            while (i) {
+                                std::cout << ++n << " " << std::hex << "# 0x" << i << std::dec << std::endl;
+                                puzzle p(i, pieces);
+                                p.print_nice();
+
+                                i = backtrace[i];
+                            }
+                            break;
+                        } else {
+                            std::cout << "\rsolution " << std::hex << i << std::dec << " found" << std::endl;
                             puzzle p(i, pieces);
                             p.print_nice();
-
-                            i = backtrace[i];
                         }
-
-                        break;
                     }
 
-                    if ((hashtable[i] & (REACHED|EXPANDED))==REACHED) {
+                    if ((hashtable[i] & (REACHED|FINAL|EXPANDED))==REACHED) {
                         puzzle p(i, pieces);
                         p.solve(1, i);
                         hashtable[i] |= EXPANDED;
@@ -248,19 +255,22 @@ public:
                 }
             }
 
-            if (solved) {
+            if (solved && !all) {
                 break;
             }
 
             if (!expand) {
-                std::cout << "no solution found" << std::endl;
                 break;
             }
 
             total += expand;
             std::cout << "\r" << total << " expansions" << std::flush;
         }
-    }
+
+        if (all) {
+            std::cout << solved << " solutions found" << std::endl;
+        }
+}
 
     // setup a position from its hashvalue
     puzzle(uint32 hashvalue, int pieces, const piece& solution=piece())
@@ -539,11 +549,14 @@ int main(int argc, const char** argv) {
     if (argc>1 && !strcmp(argv[1], "--tree")) {
         // depth-first search
         p.solve();
+    } else if (argc>1 && !strcmp(argv[1], "--all")) {
+        // scan hashtable for all solutions
+        p.scan_hashtable(1);
     } else if (argc==1) {
-        // scan hashtable
-        p.scan_hashtable();
+        // scan hashtable for one solution
+        p.scan_hashtable(0);
     } else {
-        std::cout <<"usage: " << argv[0] << " [--tree]" << std::endl;
+        std::cout <<"usage: " << argv[0] << " [--all|--tree]" << std::endl;
     }
 
     return 0;
